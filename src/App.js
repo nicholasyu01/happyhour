@@ -19,21 +19,17 @@ import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
 import './App.css';
 
+
+const API = 'https://happyhourserver.herokuapp.com'
+// const API = ''
+
 function App() {
   const [eventsState, setEventsState] = useState();
   const [selectedEvent, setSelectedEvent] = useState();
   const [inputError, setInputError] = useState(false);
 
   useEffect(() => {
-    axios.get(`/api/events`)
-    .then((data) => {
-      setEventsState(data.data.events)
-      setSelectedEvent(data.data.events[0])
-      console.log(data);
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+    loadData();
   }, []);
 
   const onSubmit = (e) => {
@@ -45,10 +41,33 @@ function App() {
       return;
     }
     
-    axios.post(`/api/event/addPerson`, {id: selectedEvent._id, name: e.target.nameInput.value })
+    axios.post(`${API}/api/event/addPerson`, {id: selectedEvent._id, name: e.target.nameInput.value })
     .then((res) => {
       console.log(res);
       setInputError(false);
+      loadData();
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+  }
+
+  const onRemovePersonClick = (name) => {
+    axios.post(`${API}/api/event/removePerson`, {id: selectedEvent._id, name: name })
+    .then((res) => {
+      console.log(res);
+      loadData();
+    })
+    .catch((error) => {
+      console.log(error);
+    });  }
+
+  function loadData() {
+    axios.get(`${API}/api/events`)
+    .then((data) => {
+      setEventsState(data.data.events)
+      setSelectedEvent(data.data.events[0])
+      console.log(data);
     })
     .catch((error) => {
       console.log(error);
@@ -58,13 +77,13 @@ function App() {
   return (
     <div>
       <Container maxWidth="sm">
-        <Stack spacing={2}>
+        {/* <Stack spacing={2}>
           {eventsState?.map((i, k) => {
             return (
               <Button variant="contained" key={k}>{i.title}</Button>
               )
           })}
-        </Stack>
+        </Stack> */}
         <Card sx={{ minWidth: 275 }}>
           <CardContent>
             <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
@@ -73,23 +92,24 @@ function App() {
             <Typography variant="h5" component="div">
               {selectedEvent?.location}
             </Typography>
-            <Typography sx={{ mb: 1.5 }} color="text.secondary">
+            {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
               {selectedEvent?.description}
+            </Typography> */}
+            <Typography sx={{ mb: 1.5 }} color="text.secondary">
+              {selectedEvent?.date}, {selectedEvent?.time}
             </Typography>
-            <Typography sx={{ fontSize: 14 }} gutterBottom>
-              {selectedEvent?.date}
-            </Typography>
-            <Typography sx={{ fontSize: 14 }} gutterBottom>
+            {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
               {selectedEvent?.time}
-            </Typography>
+            </Typography> */}
 
             <List dense={true}>
               {selectedEvent?.people?.map((i,k) => {
                 return (
                   <ListItem
+                    key={k}
                     secondaryAction={
-                      <IconButton edge="end" aria-label="delete">
-                        <DeleteIcon />
+                      <IconButton value={i.name} edge="end" onClick={() => onRemovePersonClick(i.name)} aria-label="delete">
+                        <DeleteIcon/>
                       </IconButton>
                     }
                   >
@@ -103,7 +123,7 @@ function App() {
           <CardActions>
             <form onSubmit={onSubmit} id="gameForm">
               <TextField id="nameInput" label="Name" variant="outlined" error={inputError} />
-              <Button type="submit" size="small">Join Event</Button>
+              <Button type="submit" size="small">Add</Button>
             </form>
           </CardActions>
         </Card>
